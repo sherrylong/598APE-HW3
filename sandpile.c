@@ -83,15 +83,18 @@ static void stabilize() {
           if (grid[i][j] < 4)
             continue;
           changed = 1; // topple it
-          grid[i][j] -= 4;
+
+          int batch = grid[i][j] / 4; // max topples to 4 neighbors in one batch
+          grid[i][j] -= 4 * batch;
+
           if (i > 0)
-            grid[i - 1][j]++;
+            grid[i - 1][j] += batch;
           if (j > 0)
-            grid[i][j - 1]++;
+            grid[i][j - 1] += batch;
           if (i < N - 1)
-            grid[i + 1][j]++;
+            grid[i + 1][j] += batch;
           if (j < N - 1)
-            grid[i][j + 1]++;
+            grid[i][j + 1] += batch;
         }
       }
     }
