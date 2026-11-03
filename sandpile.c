@@ -20,7 +20,8 @@ static void die(const char *s) {
 
 int N = 801;
 int **grid;
-int **within_range;
+int *col_start;
+int *col_end;
 
 // you can also use this function to debug print your sandpile
 static void render(char *filename) {
@@ -78,24 +79,22 @@ static void stabilize() {
   do {
     changed = 0;
     for (int i = 0; i < N; ++i) {
-      for (int j = 0; j <= MAX(i, N - 1 - i); ++j) {
-        if (within_range[i][j]) { // check precomputed range
-          if (grid[i][j] < 4)
-            continue;
-          changed = 1; // topple it
+      for (int j = col_start[i]; j <= col_end[i]; ++j) { // use precomputed col range
+        if (grid[i][j] < 4)
+          continue;
+        changed = 1; // topple it
 
-          int batch = grid[i][j] / 4; // max topples to 4 neighbors in one batch
-          grid[i][j] -= 4 * batch;
+        int batch = grid[i][j] / 4; // max topples to 4 neighbors in one batch
+        grid[i][j] -= 4 * batch;
 
-          if (i > 0)
-            grid[i - 1][j] += batch;
-          if (j > 0)
-            grid[i][j - 1] += batch;
-          if (i < N - 1)
-            grid[i + 1][j] += batch;
-          if (j < N - 1)
-            grid[i][j + 1] += batch;
-        }
+        if (i > 0)
+          grid[i - 1][j] += batch;
+        if (j > 0)
+          grid[i][j - 1] += batch;
+        if (i < N - 1)
+          grid[i + 1][j] += batch;
+        if (j < N - 1)
+          grid[i][j + 1] += batch;
       }
     }
   } while (changed);
@@ -116,14 +115,16 @@ void find_identity() {
   stabilize();
 }
 
-// precompute cells within topple radius to avoid repeated calculation
+// precompute col ranges for each row to skip invalid cells
 static void precompute_ranges() {
   for (int i = 0; i < N; ++i) {
-    within_range[i] = (int *)calloc(N, sizeof(int));
+    col_start[i] = N;
+    col_end[i] = 0;
     for (int j = 0; j <= MAX(i, N - 1 - i); ++j) {
       if ((i - N / 2) * (i - N / 2) + (j - N / 2) * (j - N / 2) <=
           (N / 2) * (N / 2)) {
-          within_range[i][j] = 1;
+          if (col_start[i] == N) col_start[i] = j;
+          col_end[i] = j;
       }
     }
   }
@@ -146,7 +147,8 @@ int main(int argc, char **argv) {
     grid[i] = (int *)malloc(N * sizeof(int));
   }
 
-  within_range = (int **)malloc(N * sizeof(int *));
+  col_start = (int *)malloc(N * sizeof(int));
+  col_end = (int *)malloc(N * sizeof(int));
   precompute_ranges();
 
   find_identity();
@@ -156,9 +158,7 @@ int main(int argc, char **argv) {
     free(grid[i]);
   }
   free(grid);
-  for (int i = 0; i < N; ++i) {
-    free(within_range[i]);
-  }
-  free(within_range);
+  free(col_start);
+  free(col_end);
   return EXIT_SUCCESS;
 }
