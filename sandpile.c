@@ -20,6 +20,7 @@ static void die(const char *s) {
 
 int N = 801;
 int **grid;
+int **within_range;
 
 // you can also use this function to debug print your sandpile
 static void render(char *filename) {
@@ -78,8 +79,7 @@ static void stabilize() {
     changed = 0;
     for (int i = 0; i < N; ++i) {
       for (int j = 0; j <= MAX(i, N - 1 - i); ++j) {
-        if ((i - N / 2) * (i - N / 2) + (j - N / 2) * (j - N / 2) <=
-            (N / 2) * (N / 2)) {
+        if (within_range[i][j]) { // check precomputed range
           if (grid[i][j] < 4)
             continue;
           changed = 1; // topple it
@@ -116,6 +116,19 @@ void find_identity() {
   stabilize();
 }
 
+// precompute cells within topple radius to avoid repeated calculation
+static void precompute_ranges() {
+  for (int i = 0; i < N; ++i) {
+    within_range[i] = (int *)calloc(N, sizeof(int));
+    for (int j = 0; j <= MAX(i, N - 1 - i); ++j) {
+      if ((i - N / 2) * (i - N / 2) + (j - N / 2) * (j - N / 2) <=
+          (N / 2) * (N / 2)) {
+          within_range[i][j] = 1;
+      }
+    }
+  }
+}
+
 int main(int argc, char **argv) {
   if (argc < 2 || argc > 2) {
     fprintf(stderr, "Usage: %s N\n", argv[0]);
@@ -133,6 +146,9 @@ int main(int argc, char **argv) {
     grid[i] = (int *)malloc(N * sizeof(int));
   }
 
+  within_range = (int **)malloc(N * sizeof(int *));
+  precompute_ranges();
+
   find_identity();
 
   render("identity.png");
@@ -140,5 +156,9 @@ int main(int argc, char **argv) {
     free(grid[i]);
   }
   free(grid);
+  for (int i = 0; i < N; ++i) {
+    free(within_range[i]);
+  }
+  free(within_range);
   return EXIT_SUCCESS;
 }
