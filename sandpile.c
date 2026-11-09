@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <omp.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -78,23 +79,26 @@ static void stabilize() {
   int changed = 0;
   do {
     changed = 0;
-    for (int i = 0; i < N; ++i) {
-      for (int j = col_start[i]; j <= col_end[i]; ++j) { // use precomputed col range
-        if (grid[i][j] < 4)
-          continue;
-        changed = 1; // topple it
+    for (int skip = 0; skip < 3; ++skip) { // parallelize every third row to avoid overlapping updates
+      #pragma omp parallel for reduction(|:changed) schedule(static)
+      for (int i = skip; i < N; i += 3) {
+        for (int j = col_start[i]; j <= col_end[i]; ++j) { // use precomputed col range
+          if (grid[i][j] < 4)
+            continue;
+          changed = 1; // topple it
 
-        int batch = grid[i][j] / 4; // max topples to 4 neighbors in one batch
-        grid[i][j] -= 4 * batch;
+          int batch = grid[i][j] / 4; // max topples to 4 neighbors in one batch
+          grid[i][j] -= 4 * batch;
 
-        if (i > 0)
-          grid[i - 1][j] += batch;
-        if (j > 0)
-          grid[i][j - 1] += batch;
-        if (i < N - 1)
-          grid[i + 1][j] += batch;
-        if (j < N - 1)
-          grid[i][j + 1] += batch;
+          if (i > 0)
+            grid[i - 1][j] += batch;
+          if (j > 0)
+            grid[i][j - 1] += batch;
+          if (i < N - 1)
+            grid[i + 1][j] += batch;
+          if (j < N - 1)
+            grid[i][j + 1] += batch;
+        }
       }
     }
   } while (changed);
