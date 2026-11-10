@@ -1,8 +1,6 @@
 # CS598APE HW3
 
-This repository contains code for homework 3 of CS598APE. It is relatively
-simple in comparison to HW1 and HW2 to ensure you have enough time to work on
-the course project. 
+This repository contains optimized code for homework 3 of CS598APE. 
 
 `sandpile.c` contains the implementation of finding the identity element of a 2D
 abelian sandpile.
@@ -32,14 +30,19 @@ Usage (after compiling):
 
 where `N` is the grid size
 
-Consider speeding up the generation of this 1001x1001 identity sandpile (which
-takes approximately ~3m 40s on my local laptop under the default setup)
+All optimizations were benchmarked with grid size N = 1001:
 
 ```bash
 ./sandpile.exe 1001
 ```
+To isolate the effect of each optimization, benchmark the corresponding commit using `git checkout <commit-hash>`.
+| Commit | Link | Optimization |
+|---|---|---|
+| `d292b3a` | [View Commit](https://github.com/sherrylong/598APE-HW3/commit/d292b3a) | Batch topples |
+| `2c27f6a` | [View Commit](https://github.com/sherrylong/598APE-HW3/commit/2c27f6a) | Precompute topple region |
+| `d21ad1a` | [View Commit](https://github.com/sherrylong/598APE-HW3/commit/d21ad1a) | Precompute column ranges |
+| `0ee327f` | [View Commit](https://github.com/sherrylong/598APE-HW3/commit/0ee327f) | Compiler optimizations |
+| `98a2d15` | [View Commit](https://github.com/sherrylong/598APE-HW3/commit/98a2d15) | OpenMP parallelization |
 
-For an optional, ungraded challenge, see how large a sandpile you can compute
-on the course VMs and report the grid size and runtime. There is no prescribed
-upper limit on `N` for this challenge.
+
 
